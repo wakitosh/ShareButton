@@ -1,0 +1,292 @@
+<?php
+$this->headTitle()->setSeparator(' · ');
+$escape = $this->plugin('escapeHtml');
+$escapeAttr = $this->plugin('escapeHtmlAttr');
+$translate = $this->plugin('translate');
+$title = $this->headTitle()->renderTitle();
+$siteTitle = $this->setting('installation_title', 'Omeka S');
+$emailSubject = sprintf('%s · %s', $title, $siteTitle);
+$currentUrl = $this->serverUrl(true);
+// Canonicalize: drop noisy params (lang, _, page=1) to avoid per-variant cache on providers
+try {
+    $p = @parse_url($currentUrl);
+    if (is_array($p) && !empty($p['scheme']) && !empty($p['host'])) {
+        $qs = [];
+        if (!empty($p['query'])) {
+            parse_str($p['query'], $qs);
+            // keep 'lang' to match page meta; remove only noise
+            unset($qs['_']);
+            if (isset($qs['page']) && (string)$qs['page'] === '1') { unset($qs['page']); }
+        }
+        $path = isset($p['path']) ? $p['path'] : '';
+        $canon = $p['scheme'] . '://' . $p['host'] . (isset($p['port']) ? (':' . $p['port']) : '') . $path;
+        $qstr = http_build_query($qs, '', '&', PHP_QUERY_RFC3986);
+        if ($qstr !== '') { $canon .= '?' . $qstr; }
+        $currentUrl = $canon;
+    }
+} catch (Throwable $e) { /* ignore */ }
+// If head already emitted og:url, prefer using it verbatim to guarantee a perfect match
+try {
+    $metaContainer = $this->headMeta()->getContainer();
+    if ($metaContainer) {
+        foreach ($metaContainer as $item) {
+            try {
+                if (isset($item->property) && $item->property === 'og:url' && !empty($item->content)) {
+                    $currentUrl = (string) $item->content;
+                    break;
+                }
+            } catch (Throwable $e) { /* ignore */ }
+        }
+    }
+} catch (Throwable $e) { /* ignore */ }
+$emailBody = $currentUrl;
+// URL-encoded variants for share endpoints
+$encUrl = rawurlencode($currentUrl);
+$encTitle = rawurlencode($title);
+?>
+
+<?php if ($displayAsButton): ?>
+<details class="button-details sharing-details">
+<summary class="button"><span class="fas fa-share-alt"></span></summary>
+<?php endif; ?>
+
+<?php if (in_array('fb', $enabledMethods)) :?>
+<!-- Facebook root container required by SDK -->
+<div id="fb-root"></div>
+<?php
+    // Pick Facebook SDK locale from current UI language (defaults to en_US)
+    $uiLang = '';
+    try { $uiLang = (string) $this->lang(); } catch (Throwable $e) { $uiLang = ''; }
+    $uiLangLower = strtolower($uiLang);
+    $fbLocale = 'en_US';
+    if ($uiLangLower !== '') {
+        if (strpos($uiLangLower, 'ja') === 0) {
+            $fbLocale = 'ja_JP';
+        } elseif (strpos($uiLangLower, 'en') === 0) {
+            $fbLocale = 'en_US';
+        } elseif (strpos($uiLangLower, 'fr') === 0) {
+            $fbLocale = 'fr_FR';
+        } elseif (strpos($uiLangLower, 'de') === 0) {
+            $fbLocale = 'de_DE';
+        } elseif (strpos($uiLangLower, 'ko') === 0) {
+            $fbLocale = 'ko_KR';
+        } elseif (strpos($uiLangLower, 'zh-cn') === 0 || $uiLangLower === 'zh_cn') {
+            $fbLocale = 'zh_CN';
+        } elseif (strpos($uiLangLower, 'zh-tw') === 0 || $uiLangLower === 'zh_tw') {
+            $fbLocale = 'zh_TW';
+        } elseif ($uiLangLower === 'es-419' || $uiLangLower === 'es_419') {
+            // Latin America Spanish
+            $fbLocale = 'es_LA';
+        } elseif (strpos($uiLangLower, 'es') === 0) {
+            $fbLocale = 'es_ES';
+        }
+    }
+?>
+<!-- Facebook SDK for JavaScript (locale-aware) -->
+<script async defer crossorigin="anonymous" id="facebook-jssdk"
+    src="https://connect.facebook.net/<?php echo $escapeAttr($fbLocale); ?>/sdk.js#xfbml=1&version=v20.0"></script>
+<?php
+        // Initialize FB SDK with App ID when provided (enables reliable Share Dialog on mobile)
+        $fbAppId = $this->siteSetting('sharing_fb_app_id');
+        if ($fbAppId):
+?>
+<script>
+    window.fbAsyncInit = function() {
+        try {
+            FB.init({
+                appId: <?php echo json_encode((string) $fbAppId); ?>,
+                xfbml: true,
+                version: 'v20.0'
+            });
+           window.__fbInitialized = true;
+        } catch (e) { /* no-op */ }
+    };
+</script>
+<?php endif; ?>
+<?php endif; ?>
+
+<?php if (in_array('fb', $enabledMethods)) :?>
+<?php
+    // Site setting: hide Facebook share button on mobile (<= 640px)
+    $hideFbMobile = (int) $this->siteSetting('sharing_fb_hide_mobile', 1) === 1;
+        // Site setting: mobile mode for Facebook button: 'sdk' (official) or 'js'.
+        $fbMobileMode = (string) $this->siteSetting('sharing_fb_mobile_mode', 'sdk');
+        if ($fbMobileMode !== 'sdk' && $fbMobileMode !== 'js') { $fbMobileMode = 'sdk'; }
+?>
+<style>
+<?php if ($hideFbMobile): ?>
+/* Hide Facebook share on small screens (site setting) */
+@media (max-width: 640px) {
+    ul#sharing-buttons li#sharing-fb { display: none !important; }
+}
+<?php else: ?>
+/* Force-show Facebook share on small screens (override any theme/module leftovers) */
+@media (max-width: 640px) {
+        ul#sharing-buttons li#sharing-fb { display: inline-block !important; }
+}
+<?php endif; ?>
+/* Toggle SDK vs JS on mobile based on site setting */
+@media (max-width: 640px) {
+    <?php if ($fbMobileMode === 'js'): ?>
+    /* Hide official widget on mobile; show JS button */
+    #sharing-fb .fb-share-button { display: none !important; }
+    #sharing-fb a.fb-share-js { display: inline-block !important; }
+    <?php else: ?>
+    /* Show official widget on mobile; hide JS button */
+    #sharing-fb .fb-share-button { display: inline-block !important; }
+    #sharing-fb a.fb-share-js { display: none !important; }
+    <?php endif; ?>
+}
+@media (min-width: 641px) {
+    /* On desktop, always prefer the official widget; hide JS button */
+    #sharing-fb .fb-share-button { display: inline-block !important; }
+    #sharing-fb a.fb-share-js { display: none !important; }
+}
+</style>
+<?php endif; ?>
+
+<ul id='sharing-buttons'>
+    <?php if (in_array('fb', $enabledMethods)) :?>
+        <?php $liClasses = 'sharing-button' . (!empty($fbAppId) ? ' fb-has-app' : ''); ?>
+        <li id='sharing-fb' class='<?php echo $escapeAttr($liClasses); ?>'>
+        <div class="fb-share-button"
+             data-href="<?php echo $escapeAttr($currentUrl); ?>"
+             data-layout="button"
+             data-size="large"
+             data-mobile-iframe="true">
+          <a target="_blank"
+             href="https://www.facebook.com/sharer/sharer.php?u=<?php echo $encUrl; ?>&src=sdkpreparse"
+             class="fb-xfbml-parse-ignore"><?php echo $escape($translate('Share')); ?></a>
+                </div>
+              <?php if ($fbAppId): ?>
+              <!-- JS-based Share Dialog button for mobile (FB.ui) -->
+              <a class="fb-share-js" href="#"
+                  data-share-url="<?php echo $escapeAttr($currentUrl); ?>"
+                  aria-label="<?php echo $escapeAttr($translate('Share on Facebook')); ?>">Share</a>
+                            <script>
+                            (function() {
+                                function openSharer(url) {
+                                    var u = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url);
+                                    try {
+                                        var w = window.open(u, '_blank', 'noopener,noreferrer');
+                                        if (!w) {
+                                            // Popup blocked: fallback to navigation.
+                                            window.location.href = u;
+                                        }
+                                    } catch (e) {
+                                        window.location.href = u;
+                                    }
+                                }
+                                function shareViaFbUi(url) {
+                                    try {
+                                        if (window.FB && typeof FB.ui === 'function' && window.__fbInitialized) {
+                                            FB.ui({ method: 'share', href: url }, function(){});
+                                            return true;
+                                        }
+                                    } catch (e) {}
+                                    return false;
+                                }
+                                function shareViaWebShare(url, title) {
+                                    try {
+                                        if (navigator.share && /^https?:/.test(url)) {
+                                            navigator.share({ url: url, title: title }).catch(function(){});
+                                            return true;
+                                        }
+                                    } catch (e) {}
+                                    return false;
+                                }
+                                document.addEventListener('click', function(ev) {
+                                    var a = ev.target && ev.target.closest ? ev.target.closest('a.fb-share-js') : null;
+                                    if (!a) { return; }
+                                    ev.preventDefault();
+                                    var url = a.getAttribute('data-share-url') || window.location.href;
+                                    var title = document.title || '';
+                                    if (shareViaFbUi(url)) { return; }
+                                    if (shareViaWebShare(url, title)) { return; }
+                                    openSharer(url);
+                                }, { passive: false });
+                            })();
+                            </script>
+              <?php endif; ?>
+    </li>
+    <?php endif; ?>
+    <?php if (in_array('twitter', $enabledMethods)) :?>
+    <li id='sharing-twitter' class='sharing-button'>
+          <a href="https://twitter.com/intent/tweet"
+              class="twitter-share-button"
+              data-url="<?php echo $escapeAttr($currentUrl); ?>"
+              data-text="<?php echo $escapeAttr($title); ?>"
+              data-show-count="false"
+              data-size="large">Tweet</a>
+    </li>
+    <?php endif; ?>
+    <?php if (in_array('pinterest', $enabledMethods)) :?>
+    <li id='sharing-pinterest' class='sharing-button'>
+        <a href="https://www.pinterest.com/pin/create/button/?url=<?php echo $encUrl; ?>&description=<?php echo $encTitle; ?>"
+           target="_blank" rel="noopener nofollow"
+           aria-label="<?php echo $escapeAttr($translate('Share on Pinterest')); ?>">
+            <span class="fab fa-pinterest" aria-hidden="true"></span>
+        </a>
+    </li>
+    <?php endif; ?>
+    <?php if (in_array('tumblr', $enabledMethods)) :?>
+    <li id='sharing-tumblr' class='sharing-button'>
+        <a href="https://www.tumblr.com/share/link?url=<?php echo $encUrl; ?>&name=<?php echo $encTitle; ?>"
+           target="_blank" rel="noopener nofollow"
+           aria-label="<?php echo $escapeAttr($translate('Share on Tumblr')); ?>">
+            <span class="fab fa-tumblr" aria-hidden="true"></span>
+        </a>
+    </li>
+    <?php endif; ?>
+    <?php if (in_array('email', $enabledMethods)) :?>
+    <li id='sharing-email' class='sharing-button'>
+        <a href="mailto:?subject=<?php echo $escapeAttr($emailSubject); ?>&body=<?php echo $escapeAttr($emailBody); ?>"><?php echo $escape($translate('Email')); ?></a>
+    </li>
+    <?php endif; ?>
+    <?php if (in_array('embed', $enabledMethods) ): ?>
+    <?php
+    if ($itemId) {
+        $embedUrl = $this->url(
+            'embed-item',
+            [
+                'controller' => 'index',
+                'action' => 'embed-item',
+                'item-id' => $itemId,
+                'site-slug' => $siteSlug,
+            ],
+            ['force_canonical' => true]
+         );
+    }
+    if ($mediaId) {
+        $embedUrl = $this->url(
+            'embed-media',
+            [
+                'controller' => 'index',
+                'action' => 'embed-media',
+                'media-id' => $mediaId,
+                'site-slug' => $siteSlug,
+            ],
+            ['force_canonical' => true]
+         );
+    }
+    if ($pageId) {
+        $embedUrl = $this->url(
+            'embed-page',
+            [
+                'controller' => 'index',
+                'action' => 'embed-page',
+                'page-id' => $pageId,
+            ],
+            ['force_canonical' => true]
+        );
+    }
+    ?>
+    <li id='sharing-embed' class='sharing-button'>
+        <a data-embed-url="<?php echo $embedUrl; ?>"><?php echo $translate('Get embed code'); ?></a>
+    </li>
+    <?php endif;?>
+</ul>
+
+<?php if ($displayAsButton): ?>
+</details>
+<?php endif; ?>

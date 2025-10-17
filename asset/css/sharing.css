@@ -1,0 +1,229 @@
+/* Load Font Awesome 5 Brands (not bundled by Omeka) for brand icons */
+@font-face {
+    font-family: "Font Awesome 5 Brands";
+    font-style: normal;
+    font-weight: 400;
+    font-display: block;
+    src: url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/webfonts/fa-brands-400.woff2") format("woff2"),
+        url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/webfonts/fa-brands-400.woff") format("woff");
+}
+
+/* Ensure .fab uses the Brands font */
+.fab {
+    font-family: "Font Awesome 5 Brands";
+    font-weight: 400;
+}
+
+ul#sharing-buttons {
+    list-style: none;
+    line-height: 20px;
+    padding-left: 0px;
+    margin-left: 0px;
+    clear: both;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+ul#sharing-buttons li {
+    margin-right: 3px;
+}
+
+.fb-share-button span,
+li#sharing-pinterest span {
+    vertical-align: top !important;
+}
+
+ul#sharing-buttons li#sharing-tumblr {
+    margin-right: 1px;
+}
+
+/* Generic icon sizing and alignment */
+ul#sharing-buttons li a .fa,
+ul#sharing-buttons li a .fas,
+ul#sharing-buttons li a .far,
+ul#sharing-buttons li a .fab {
+    font-size: 20px;
+    line-height: 20px;
+}
+
+/* Optional brand colors for visibility */
+li#sharing-fb a {
+    color: #1877f2;
+}
+
+li#sharing-twitter a {
+    color: #1DA1F2;
+}
+
+li#sharing-pinterest a {
+    color: #000000;
+    /* Changed to black for X branding */
+}
+
+/* SVG-based X icon styling */
+li#sharing-twitter a .sharing-icon-x {
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+}
+
+li#sharing-twitter a .sharing-icon-x line {
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: square;
+}
+
+li#sharing-tumblr a {
+    color: #35465C;
+}
+
+li#sharing-email a,
+li#sharing-embed a {
+    font-size: 11px;
+    vertical-align: top;
+    cursor: pointer;
+    height: 20px;
+    line-height: 20px;
+    padding: 0 5px;
+    display: inline-block;
+    font-family: "Helvetica Neue", "HelveticaNeue", "Helvetica", "Arial", sans-serif;
+    font-weight: 500;
+    text-decoration: none;
+    color: #666;
+}
+
+li#sharing-email a {
+    background-color: #555;
+    border-radius: 3px;
+    color: #fff;
+}
+
+li#sharing-email a:hover {
+    border: 0;
+    background-color: #3f3f3f;
+}
+
+li#sharing-email a:before {
+    content: "\f0e0";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    margin-right: 3px;
+}
+
+li#sharing-embed a {
+    background-color: #fff;
+    border: 1px solid #c2c2c2;
+    border-radius: 3px;
+    line-height: 18px;
+}
+
+li#sharing-embed a:hover {
+    background-color: #eee;
+    color: #666;
+}
+
+li#sharing-embed a:before {
+    content: "\f121";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    margin-right: 3px;
+}
+
+/*
+ * Hide fallback texts ("Share" / "Tweet") while widgets load, and
+ * keep a reasonable placeholder size to avoid layout shift.
+ */
+li#sharing-fb .fb-share-button {
+    min-height: 28px;
+    /* Facebook large button height */
+    min-width: 72px;
+}
+
+li#sharing-fb .fb-share-button>a.fb-xfbml-parse-ignore {
+    text-indent: -9999px;
+    overflow: hidden;
+    display: inline-block;
+    width: 72px;
+    height: 28px;
+}
+
+li#sharing-twitter a.twitter-share-button {
+    text-indent: -9999px;
+    overflow: hidden;
+    display: inline-block;
+    width: 74px;
+    height: 28px;
+}
+
+/* JS-based FB share button (FB.ui) */
+li#sharing-fb a.fb-share-js {
+    display: none;
+    background-color: #1877f2;
+    color: #fff;
+    height: 28px;
+    line-height: 28px;
+    padding: 0 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    text-decoration: none;
+}
+
+@media (max-width: 640px) {
+    li#sharing-fb.fb-has-app .fb-share-button {
+        display: none;
+    }
+
+    li#sharing-fb.fb-has-app a.fb-share-js {
+        display: inline-block;
+    }
+}
+
+/* Direct FB share fallback link (www.facebook.com) */
+li#sharing-fb a.fb-direct {
+    display: none;
+    background-color: #1877f2;
+    color: #fff;
+    height: 28px;
+    line-height: 28px;
+    padding: 0 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    text-decoration: none;
+}
+
+.sharing-details {
+    display: inline-block;
+    cursor: pointer;
+}
+
+.sharing-details summary {
+    display: inline-block;
+    height: 45px;
+    padding: 7.5px;
+    border: 0;
+    border-radius: 2px;
+}
+
+.sharing-details[open] summary,
+.sharing-details summary:hover {
+    background-color: #dedede;
+}
+
+.sharing-details[open]>ul {
+    display: flex;
+    position: absolute;
+    z-index: 10;
+    overflow: visible;
+    cursor: auto;
+    min-height: 48px;
+    padding: 15px;
+    border: 1px solid #DCD6CA;
+    background: #EEE;
+    background-color: #FFFFFF;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
+}
+
+.sharing-details[open]>ul#sharing-buttons {
+    padding-left: 15px;
+    margin-top: 3px;
+}
