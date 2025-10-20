@@ -6,6 +6,18 @@ All notable changes to this project will be documented in this file.
 This project follows semantic versioning. Dates use ISO-8601 (YYYY-MM-DD).
 本プロジェクトはセマンティック バージョニングに従い、日付は ISO-8601（YYYY-MM-DD）形式です。
 
+## [1.1.0] - 2025-10-20
+
+### English
+- Theme-independence: Automatically add Open Graph meta tags (og:*) on Item/Media/Page show views when missing, so shares look good even if the theme doesn’t output them.
+- Duplicate-safe: Skip emitting og:* tags already present (from theme or other modules).
+- No breaking changes: Placement and block behavior unchanged; site settings continue to control methods and layout.
+
+### 日本語
+- テーマ非依存化: テーマが `og:*` を出力しない場合でも、アイテム/メディア/ページの詳細表示で Open Graph メタを自動補完し、共有時の見栄えを確保します。
+- 重複回避: すでに出力済みの `og:*` がある場合は追加しません（テーマや他モジュールとの併用に配慮）。
+- 破壊的変更なし: 表示位置やブロックの挙動は従来どおり。サイト設定でボタン種別や表示方法を制御できます。
+
 ## [1.0.0] - 2025-10-18
 
 ### English

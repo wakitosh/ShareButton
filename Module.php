@@ -81,6 +81,12 @@ class Module extends AbstractModule {
         'view.show.after',
         [$this, 'addSharingMethods']
       );
+      // Add Open Graph meta if not already present.
+      $sharedEventManager->attach(
+        $resource,
+        'view.show.before',
+        [$this, 'addOpenGraphHeadMeta']
+      );
     }
 
     // Add discoverable oEmbed head links to public pages.
@@ -320,6 +326,22 @@ class Module extends AbstractModule {
     $view = $event->getTarget();
     $controller = $status->getRouteMatch()->getParam('controller');
 
+    // Avoid duplicates: collect already-set og:* properties.
+    $existing = [];
+    try {
+      $container = $view->headMeta()->getContainer();
+      if ($container) {
+        foreach ($container as $item) {
+          if (isset($item->property) && strpos((string) $item->property, 'og:') === 0) {
+            $existing[(string) $item->property] = TRUE;
+          }
+        }
+      }
+    }
+    catch (\Throwable $e) {
+      // Ignore.
+    }
+
     $metaProperties = [
       'og:type' => 'website',
       'og:site_name' => $view->site->title(),
@@ -362,7 +384,7 @@ class Module extends AbstractModule {
         break;
     }
     foreach ($metaProperties as $metaProperty => $metaContent) {
-      if ($metaContent) {
+      if ($metaContent && empty($existing[$metaProperty])) {
         $view->headMeta()->appendProperty($metaProperty, $metaContent);
       }
     }
