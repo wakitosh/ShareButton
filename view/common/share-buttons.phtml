@@ -94,7 +94,7 @@ $encTitle = rawurlencode($title);
     window.fbAsyncInit = function() {
         try {
             FB.init({
-                appId: <?php echo json_encode((string) $fbAppId); ?>,
+                appId: <?php echo json_encode((string) $fbAppId, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>,
                 xfbml: true,
                 version: 'v20.0'
             });
@@ -240,11 +240,12 @@ $encTitle = rawurlencode($title);
     <?php endif; ?>
     <?php if (in_array('email', $enabledMethods)) :?>
     <li id='sharing-email' class='sharing-button'>
-        <a href="mailto:?subject=<?php echo $escapeAttr($emailSubject); ?>&body=<?php echo $escapeAttr($emailBody); ?>"><?php echo $escape($translate('Email')); ?></a>
+        <a href="mailto:?subject=<?php echo rawurlencode($emailSubject); ?>&amp;body=<?php echo rawurlencode($emailBody); ?>"><?php echo $escape($translate('Email')); ?></a>
     </li>
     <?php endif; ?>
     <?php if (in_array('embed', $enabledMethods) ): ?>
     <?php
+    $embedUrl = '';
     if ($itemId) {
         $embedUrl = $this->url(
             'embed-item',
@@ -281,9 +282,11 @@ $encTitle = rawurlencode($title);
         );
     }
     ?>
+    <?php if ($embedUrl !== ''): ?>
     <li id='sharing-embed' class='sharing-button'>
-        <a data-embed-url="<?php echo $embedUrl; ?>"><?php echo $translate('Get embed code'); ?></a>
+        <a data-embed-url="<?php echo $escapeAttr($embedUrl); ?>"><?php echo $escape($translate('Get embed code')); ?></a>
     </li>
+    <?php endif; ?>
     <?php endif;?>
 </ul>
 

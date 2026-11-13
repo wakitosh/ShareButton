@@ -55,6 +55,10 @@ class OembedController extends AbstractActionController {
         $response->setStatusCode(404);
         return $response;
       }
+      if (!$site) {
+        $response->setStatusCode(404);
+        return $response;
+      }
       $oembed['title'] = sprintf('%s · %s', $item->displayTitle(), $site->title());
       $embedUrl = $this->url()->fromRoute('embed-item', ['site-slug' => $site->slug(), 'item-id' => $item->id()], ['force_canonical' => TRUE]);
       $oembed['html'] = sprintf('<iframe src="%s"></iframe>', $escapeHtml($embedUrl));
@@ -75,6 +79,10 @@ class OembedController extends AbstractActionController {
         $response->setStatusCode(404);
         return $response;
       }
+      if (!$site) {
+        $response->setStatusCode(404);
+        return $response;
+      }
       $oembed['title'] = sprintf('%s · %s', $media->displayTitle(), $site->title());
       $embedUrl = $this->url()->fromRoute('embed-media', ['site-slug' => $site->slug(), 'media-id' => $media->id()], ['force_canonical' => TRUE]);
       $oembed['html'] = sprintf('<iframe src="%s"></iframe>', $escapeHtml($embedUrl));
@@ -89,9 +97,13 @@ class OembedController extends AbstractActionController {
       [$path, $siteSlug, $pageSlug] = $pageMatches;
       try {
         $site = $this->api()->searchOne('sites', ['slug' => $siteSlug])->getContent();
-        $sitePage = $this->api()->searchOne('site_pages', ['site_id' => $site->id(), 'slug' => $pageSlug])->getContent();
+        $sitePage = $site ? $this->api()->searchOne('site_pages', ['site_id' => $site->id(), 'slug' => $pageSlug])->getContent() : NULL;
       }
       catch (\Exception $e) {
+        $response->setStatusCode(404);
+        return $response;
+      }
+      if (!$sitePage) {
         $response->setStatusCode(404);
         return $response;
       }
@@ -101,7 +113,7 @@ class OembedController extends AbstractActionController {
       foreach ($sitePage->blocks() as $block) {
         foreach ($block->attachments() as $attachment) {
           $item = $attachment->item();
-          if ($primaryMedia = $item->primaryMedia()) {
+          if ($item && ($primaryMedia = $item->primaryMedia())) {
             $oembed['thumbnail_url'] = $primaryMedia->thumbnailUrl('square');
             $oembed['thumbnail_width'] = 200;
             $oembed['thumbnail_height'] = 200;

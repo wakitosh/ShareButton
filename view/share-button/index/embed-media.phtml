@@ -1,5 +1,6 @@
 <?php
 $escape = $this->plugin('escapeHtml');
+$escapeAttr = $this->plugin('escapeHtmlAttr');
 ?>
 <!DOCTYPE html>
 <html>
@@ -23,12 +24,12 @@ $escape = $this->plugin('escapeHtml');
 <body>
     <div style="width: 450px">
         <div id='text'>
-            <h1><a href='<?php echo $media->siteUrl($siteSlug, true); ?>'><?php echo $media->displayTitle(); ?></a></h1>
-            <p><?php echo $media->displayDescription();?></p>
+            <h1><a href='<?php echo $escapeAttr($media->siteUrl($siteSlug, true)); ?>'><?php echo $escape($media->displayTitle()); ?></a></h1>
+            <p><?php echo $escape((string) $media->displayDescription()); ?></p>
         </div>
         <?php
         if ($primaryMedia = $media->primaryMedia()) {
-            $image = $escape($primaryMedia->thumbnailUrl('square'));
+            $image = $escapeAttr((string) $primaryMedia->thumbnailUrl('square'));
             echo "<img src='$image'></img>";
         }
         ?>

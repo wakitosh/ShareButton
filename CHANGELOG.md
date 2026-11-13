@@ -6,6 +6,24 @@ All notable changes to this project will be documented in this file.
 This project follows semantic versioning. Dates use ISO-8601 (YYYY-MM-DD).
 本プロジェクトはセマンティック バージョニングに従い、日付は ISO-8601（YYYY-MM-DD）形式です。
 
+## [1.1.1] - 2026-11-13
+
+### English
+- Security: the embed pages (`/embed-item`, `/embed-media`, `/embed-page`) printed the title and description of a resource without escaping, so markup stored in metadata was interpreted by the browser. Titles, descriptions and URLs are now escaped. A description that relied on HTML is shown as plain text in the embed page.
+- Security: the Facebook App ID is written into the page script with HTML-safe JSON encoding, and the embed URL attribute is escaped.
+- Fixed: the "Email" share link now URL-encodes the subject and body, so characters in the page address can no longer add other mail headers.
+- Fixed: the oEmbed endpoint answered with a server error when the site or page in the given URL did not exist, or when a page attachment had no item. It now answers 404, or skips the attachment.
+- Fixed: the embed page for a site page linked to a wrong address; it now links to the site.
+- Fixed: the embed button is left out where there is nothing to embed, instead of raising a PHP warning.
+
+### 日本語
+- セキュリティ: 埋め込みページ（`/embed-item`、`/embed-media`、`/embed-page`）がリソースのタイトルと説明をエスケープせずに出力していたため、メタデータ中のマークアップがブラウザで解釈されていました。タイトル、説明、URL をエスケープするようにしました。HTML を前提にした説明は、埋め込みページではプレーンテキストで表示されます。
+- セキュリティ: Facebook App ID を HTML 安全な JSON エンコードでスクリプトに出力し、埋め込み URL の属性をエスケープするようにしました。
+- 修正: 「Email」共有リンクの件名と本文を URL エンコードするようにしました。ページのアドレスに含まれる文字で、ほかのメールヘッダーを追加できなくなります。
+- 修正: oEmbed エンドポイントが、指定 URL のサイトやページが存在しない場合、またはページの添付にアイテムがない場合にサーバーエラーを返していました。404 を返す、または該当の添付を飛ばすようにしました。
+- 修正: サイトページの埋め込みページのリンク先が誤っていたため、サイトへのリンクに直しました。
+- 修正: 埋め込む対象がない場所では、PHP の警告を出す代わりに埋め込みボタンを表示しないようにしました。
+
 ## [1.1.0] - 2025-10-20
 
 ### English
